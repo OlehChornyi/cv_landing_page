@@ -18,7 +18,60 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
+  @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _targetKey = GlobalKey();
+  final GlobalKey _targetKey2 = GlobalKey();
+
+  // Key to identify the target widget
+  void _scrollToWidget(key) {
+    final RenderBox renderBox =
+        key.currentContext!.findRenderObject() as RenderBox;
+    final position = renderBox
+        .localToGlobal(Offset.zero)
+        .dy; // Position of the target widget
+
+    // Animate scroll to the target position
+    _scrollController.animateTo(
+      _scrollController.offset + position,
+      duration: Duration(seconds: 1),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _scrollToWidgetAtBottom() {
+    final RenderBox renderBox =
+        _targetKey2.currentContext!.findRenderObject() as RenderBox;
+    final position = renderBox
+        .localToGlobal(Offset.zero)
+        .dy; // Position of the widget on screen
+    final screenHeight =
+        MediaQuery.of(context).size.height; // Height of the screen
+
+    // Calculate how much to scroll such that the widget appears at the bottom of the screen
+    final targetScrollPosition = _scrollController.offset +
+        position -
+        screenHeight +
+        renderBox.size.height;
+
+    _scrollController.animateTo(
+      targetScrollPosition,
+      duration: Duration(seconds: 1),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -26,9 +79,24 @@ class LandingPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            GestureDetector(
+              onTap: () {
+                _scrollToWidgetAtBottom();
+              },
+              child: Container(
+                width: double.infinity,
+                color: Colors.black,
+                child: Text(
+                  'Have any questions about app development? Order a consultation now!',
+                  style: textSmallWhite,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
             Container(
               height: 500,
               child: Row(
@@ -65,14 +133,16 @@ class LandingPage extends StatelessWidget {
                                       MaterialStatePropertyAll<Color>(
                                           Colors.black)),
                               onPressed: () {
-                                // Handle button press
-                                print('Get Started button pressed!');
+                                // _scrollToWidget(_targetKey2);
+                                _scrollToWidgetAtBottom();
                               },
                               child: Text('Order Services'),
                             ),
                             SizedBox(width: 10),
                             OutlinedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                _scrollToWidget(_targetKey);
+                              },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.black, // Text color
                                 side: BorderSide(
@@ -190,8 +260,8 @@ class LandingPage extends StatelessWidget {
                               backgroundColor: MaterialStatePropertyAll<Color>(
                                   Colors.black)),
                           onPressed: () {
-                            // Handle button press
-                            print('Get Started button pressed!');
+                            _scrollToWidgetAtBottom();
+                            // _scrollToWidget(_targetKey2);
                           },
                           child: Text('Order Services'),
                         ),
@@ -201,7 +271,7 @@ class LandingPage extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 100),
+            SizedBox(key: _targetKey, height: 100),
             Text(
               "What type of services you'll probably want",
               style: textHeader,
@@ -376,6 +446,7 @@ class LandingPage extends StatelessWidget {
                         ),
                         SizedBox(width: screenWidth * 0.05),
                         Container(
+                          key: _targetKey2,
                           width: 300,
                           child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
